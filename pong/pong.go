@@ -108,8 +108,12 @@ func (b *ball) update(leftPaddle, rightPaddle *paddle, elapsedTime float32) {
 	b.y += b.yv * elapsedTime
 
 	// handle top/bottom collisions
-	if b.y+-b.radius < 0 || b.y+b.radius > float32(winH) {
+	if b.y+-b.radius < 0 {
 		b.yv = -b.yv
+		b.y = b.radius
+	} else if b.y+b.radius > float32(winH) {
+		b.yv = -b.yv
+		b.y = b.y - b.radius
 	}
 
 	// handle paddle collisions
@@ -210,7 +214,7 @@ func main() {
 	check(err)
 	defer sdl.Quit()
 
-	window, err := sdl.CreateWindow("Testing SDL2", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(winW), int32(winH), sdl.WINDOW_SHOWN)
+	window, err := sdl.CreateWindow("Pong", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED, int32(winW), int32(winH), sdl.WINDOW_SHOWN)
 	check(err)
 
 	defer window.Destroy()
