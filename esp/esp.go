@@ -16,8 +16,7 @@ var mousePoint sdl.Point
 
 var selectedCube *sdl.Rect
 
-var fields = createSquares(50, 50, 150, 150, 10)
-
+var gameField = field{createSquares(50, 50, 150, 150, 10), -1}
 
 func run() int {
 	var window *sdl.Window
@@ -56,10 +55,10 @@ func run() int {
 		renderer.Clear()
 
 		if mouseState == 1 {
-			fields.setSelected(mousePoint)
+			gameField.setSelected(mousePoint)
 		}
 
-		fields.render(renderer, mousePoint)
+		gameField.render(renderer, mousePoint)
 
 		renderer.Present()
 
