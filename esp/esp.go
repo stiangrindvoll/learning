@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -14,13 +15,18 @@ var mouseX, mouseY int32
 var mouseState uint32
 var mousePoint sdl.Point
 
+type player struct {
+	name  string
+	field field
+}
+
 var selectedCube *sdl.Rect
 
-var gameField = field{createSquares(50, 50, 150, 150, 10), -1}
-
-func run() int {
+func run(name string) int {
 	var window *sdl.Window
 	var renderer *sdl.Renderer
+
+	player := player{name: name, field: field{createSquares(50, 50, 150, 150, 10), -1}}
 
 	window, err := sdl.CreateWindow(winTitle, sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
 		winWidth, winHeight, sdl.WINDOW_SHOWN)
@@ -55,10 +61,10 @@ func run() int {
 		renderer.Clear()
 
 		if mouseState == 1 {
-			gameField.setSelected(mousePoint)
+			player.field.setSelected(mousePoint)
 		}
 
-		gameField.render(renderer, mousePoint)
+		player.field.render(renderer, mousePoint)
 
 		renderer.Present()
 
@@ -68,5 +74,17 @@ func run() int {
 }
 
 func main() {
-	os.Exit(run())
+	help := flag.Bool("h", false, "Display Help")
+	rendezvousString := flag.String("r", "ESPGAME", "Unique string to identify group of nodes. Share this with your friends to let them connect with you")
+	name := flag.String("n", "ESP Game", "Unique string to identify group of nodes. Share this with your friends to let them connect with you")
+	flag.Parse()
+
+	if *help {
+		fmt.Printf("This program demonstrates a simple p2p chat application using libp2p\n\n")
+		fmt.Printf("Usage: Run './chat in two different terminals. Let them connect to the bootstrap nodes, announce themselves and connect to the peers\n")
+
+		os.Exit(0)
+	}
+	go createNetwork(*rendezvousString)
+	os.Exit(run(*name))
 }

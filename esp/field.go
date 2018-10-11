@@ -26,8 +26,8 @@ func createSquares(startX, startY, width, height, spacing int32) (sq squares) {
 
 	for i := 0; i < 3; i++ {
 		for j := 0; j < 3; j++ {
-			x = (int32(i) * (spacing + width)) + startX
-			y = (int32(j) * (spacing + height)) + startY
+			x = (int32(j) * (spacing + width)) + startX
+			y = (int32(i) * (spacing + height)) + startY
 			sq = append(sq, square{R: sdl.Rect{X: x, Y: y, W: width, H: height}})
 
 		}
