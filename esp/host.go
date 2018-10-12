@@ -32,7 +32,7 @@ var bootstrapPeers = []string{"/ip4/81.166.72.135/tcp/4001/ipfs/QmYkQ9SxH71iT6At
 func createNetwork(rendezvous string) {
 	ctx := context.Background()
 
-	host, err := libp2p.New(ctx)
+	host, err := libp2p.New(ctx, libp2p.NATPortMap())
 	if err != nil {
 		panic(err)
 	}

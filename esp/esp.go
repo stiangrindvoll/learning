@@ -76,7 +76,7 @@ func run(name string) int {
 func main() {
 	help := flag.Bool("h", false, "Display Help")
 	rendezvousString := flag.String("r", "ESPGAME", "Unique string to identify group of nodes. Share this with your friends to let them connect with you")
-	name := flag.String("n", "ESP Game", "Unique string to identify group of nodes. Share this with your friends to let them connect with you")
+	name := flag.String("n", "ESP Game", "Player name")
 	flag.Parse()
 
 	if *help {
