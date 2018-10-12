@@ -12,7 +12,9 @@ import (
 	iaddr "github.com/ipfs/go-ipfs-addr"
 	libp2p "github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
+	peer "github.com/libp2p/go-libp2p-peer"
 	pstore "github.com/libp2p/go-libp2p-peerstore"
+	protocol "github.com/libp2p/go-libp2p-protocol"
 	mh "github.com/multiformats/go-multihash"
 
 	inet "github.com/libp2p/go-libp2p-net"
@@ -26,10 +28,13 @@ import (
 // 	"/ip4/128.199.219.111/tcp/4001/ipfs/QmSoLSafTMBsPKadTEgaXctDQVcqN88CNLHXMkTNwMKPnu",
 // 	"/ip4/178.62.158.247/tcp/4001/ipfs/QmSoLer265NRgSp2LA3dPaeykiS1J6DifTC88f5uVQKNAd",
 // }
-
-var bootstrapPeers = []string{"/ip4/81.166.72.135/tcp/4001/ipfs/QmYkQ9SxH71iT6AttBajMqrrkPx1rmm8eBnRuZuqWDLBxB"}
-
-var readWriter *bufio.ReadWriter
+var (
+	bootstrapPeers             = []string{"/ip4/81.166.72.135/tcp/4001/ipfs/QmYkQ9SxH71iT6AttBajMqrrkPx1rmm8eBnRuZuqWDLBxB"}
+	pid            protocol.ID = "/espgame/0.1.0"
+	myPeers        []pstore.PeerInfo
+	kadDHT         *dht.IpfsDHT
+	peers          = make(map[peer.ID]*bufio.ReadWriter)
+)
 
 func createNetwork(rendezvous string) {
 	ctx := context.Background()
@@ -38,15 +43,17 @@ func createNetwork(rendezvous string) {
 	if err != nil {
 		panic(err)
 	}
+	defer host.Close()
 
 	// Set a function as stream handler.
 	// This function is called when a peer initiate a connection and starts a stream with this peer.
-	host.SetStreamHandler("/espgame/0.1.0", handleStream)
+	host.SetStreamHandler(pid, handleStream)
 
-	kadDht, err := dht.New(ctx, host)
+	kadDHT, err = dht.New(ctx, host)
 	if err != nil {
 		panic(err)
 	}
+	defer kadDHT.Close()
 
 	// Let's connect to the bootstrap nodes first. They will tell us about the other nodes in the network.
 	for _, peerAddr := range bootstrapPeers {
@@ -68,7 +75,8 @@ func createNetwork(rendezvous string) {
 	fmt.Println("announcing ourselves...")
 	tctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
-	if err := kadDht.Provide(tctx, rendezvousPoint, true); err != nil {
+
+	if err := kadDHT.Provide(tctx, rendezvousPoint, true); err != nil {
 		panic(err)
 	}
 
@@ -79,47 +87,50 @@ func createNetwork(rendezvous string) {
 	fmt.Println("searching for other peers...")
 	tctx, cancel = context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
-	peers, err := kadDht.FindProviders(tctx, rendezvousPoint)
+	myPeers, err = kadDHT.FindProviders(tctx, rendezvousPoint)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Found %d peers!\n", len(peers))
+	fmt.Printf("Found %d peers!\n", len(myPeers))
 
-	for _, p := range peers {
+	for _, p := range myPeers {
 		fmt.Println("Peer: ", p)
 	}
 
-	for _, p := range peers {
+	for _, p := range myPeers {
+
 		if p.ID == host.ID() || len(p.Addrs) == 0 {
 			// No sense connecting to ourselves or if addrs are not available
+			fmt.Println("Skipping:", p.ID)
 			continue
 		}
 
-		stream, err := host.NewStream(ctx, p.ID, "/espgame/0.1.0")
-
+		stream, err := host.NewStream(ctx, p.ID, pid)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("ERROR: ", err)
 		} else {
-			rw := bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
-
-			go writeData(rw)
-			go readData(rw)
+			peers[p.ID] = bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
+			// go writeData(rw)
+			go readData(peers[p.ID])
+			fmt.Println("Connected to: ", p.ID)
 		}
 
-		fmt.Println("Connected to: ", p)
 	}
 
 	select {}
 }
 
 func handleStream(stream inet.Stream) {
-	log.Println("Got a new stream!")
+	peer := stream.Conn().RemotePeer()
+	log.Println("Got a new stream from:", peer)
+
+	peerInfo := kadDHT.FindLocal(peer)
+	fmt.Println("IS in local ps?", peerInfo)
 
 	// Create a buffer stream for non blocking read and write.
-	readWriter = bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
+	peers[peerInfo.ID] = bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
 
-	go readData(readWriter)
-	// go writeData(rw)
+	go readData(peers[peerInfo.ID])
 
 	// 'stream' will stay open until you close it (or the other side closes it).
 }

@@ -20,13 +20,11 @@ type player struct {
 	field field
 }
 
-var selectedCube *sdl.Rect
-
 func run(name string) int {
 	var window *sdl.Window
 	var renderer *sdl.Renderer
 
-	player := player{name: name, field: field{createSquares(50, 50, 150, 150, 10), -1}}
+	user := player{name: name, field: field{createSquares(50, 50, 150, 150, 10), -1}}
 
 	window, err := sdl.CreateWindow(winTitle, sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
 		winWidth, winHeight, sdl.WINDOW_SHOWN)
@@ -61,10 +59,10 @@ func run(name string) int {
 		renderer.Clear()
 
 		if mouseState == 1 {
-			player.field.setSelected(mousePoint)
+			user.field.setSelected(mousePoint, user)
 		}
 
-		player.field.render(renderer, mousePoint)
+		user.field.render(renderer, mousePoint)
 
 		renderer.Present()
 

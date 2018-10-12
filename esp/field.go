@@ -12,8 +12,7 @@ type field struct {
 }
 
 type square struct {
-	R        sdl.Rect
-	Selected bool
+	R sdl.Rect
 }
 
 // ID of the square
@@ -49,15 +48,17 @@ func (f *field) render(r *sdl.Renderer, mp sdl.Point) {
 	}
 }
 
-func (f *field) setSelected(mp sdl.Point) {
+func (f *field) setSelected(mp sdl.Point, p player) {
 	for i, s := range f.squares {
 		if mp.InRect(&s.R) {
 			f.selected = i
-			if readWriter != nil {
-				readWriter.WriteString(fmt.Sprintf("selected: %d\n", i))
-				readWriter.Flush()
-			} else {
-				fmt.Println("readWriter is null, cant write")
+			for peer, rw := range peers {
+				if peers[peer] != nil {
+					rw.WriteString(fmt.Sprintf("Selected: %d To: %s From: %s\n", i, peer, p.name))
+					rw.Flush()
+				} else {
+					fmt.Println("readWriter is null, cant write")
+				}
 			}
 			fmt.Println("Selected Square:", i)
 		}
