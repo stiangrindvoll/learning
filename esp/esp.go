@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"os"
@@ -22,8 +21,6 @@ type player struct {
 }
 
 var selectedCube *sdl.Rect
-
-var communication *bufio.ReadWriter
 
 func run(name string) int {
 	var window *sdl.Window
@@ -64,7 +61,7 @@ func run(name string) int {
 		renderer.Clear()
 
 		if mouseState == 1 {
-			player.field.setSelected(mousePoint, communication)
+			player.field.setSelected(mousePoint)
 		}
 
 		player.field.render(renderer, mousePoint)
@@ -88,6 +85,6 @@ func main() {
 
 		os.Exit(0)
 	}
-	go createNetwork(*rendezvousString, communication)
+	go createNetwork(*rendezvousString)
 	os.Exit(run(*name))
 }

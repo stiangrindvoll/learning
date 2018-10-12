@@ -31,10 +31,7 @@ var bootstrapPeers = []string{"/ip4/81.166.72.135/tcp/4001/ipfs/QmYkQ9SxH71iT6At
 
 var readWriter *bufio.ReadWriter
 
-func createNetwork(rendezvous string, rw *bufio.ReadWriter) {
-
-	readWriter = rw
-
+func createNetwork(rendezvous string) {
 	ctx := context.Background()
 
 	host, err := libp2p.New(ctx, libp2p.NATPortMap())
@@ -121,7 +118,7 @@ func handleStream(stream inet.Stream) {
 	// Create a buffer stream for non blocking read and write.
 	readWriter = bufio.NewReadWriter(bufio.NewReader(stream), bufio.NewWriter(stream))
 
-	// go readData(rw)
+	go readData(readWriter)
 	// go writeData(rw)
 
 	// 'stream' will stay open until you close it (or the other side closes it).

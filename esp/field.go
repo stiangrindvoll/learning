@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -50,11 +49,16 @@ func (f *field) render(r *sdl.Renderer, mp sdl.Point) {
 	}
 }
 
-func (f *field) setSelected(mp sdl.Point, communicataion *bufio.ReadWriter) {
+func (f *field) setSelected(mp sdl.Point) {
 	for i, s := range f.squares {
 		if mp.InRect(&s.R) {
 			f.selected = i
-			communicataion.WriteString(fmt.Sprintf("selected: %d\n", i))
+			if readWriter != nil {
+				readWriter.WriteString(fmt.Sprintf("selected: %d\n", i))
+				readWriter.Flush()
+			} else {
+				fmt.Println("readWriter is null, cant write")
+			}
 			fmt.Println("Selected Square:", i)
 		}
 	}
