@@ -37,11 +37,10 @@ func createSquares(startX, startY, width, height, spacing int32) (sq squares) {
 
 func (f *field) render(r *sdl.Renderer, mp sdl.Point) {
 	for i, s := range f.squares {
-		if mp.InRect(&s.R) {
-			r.SetDrawColor(255, 0, 255, 255)
-		} else if f.selected >= 0 && f.selected < 9 && f.selected == i {
+		if f.selected >= 0 && f.selected < 9 && f.selected == i {
 			r.SetDrawColor(100, 255, 255, 255)
-
+		} else if mp.InRect(&s.R) {
+			r.SetDrawColor(255, 0, 255, 255)
 		} else {
 			r.SetDrawColor(100, 0, 255, 255)
 		}
